@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Your profile — SplitEase{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 640px;">
+  <h2 class="mb-4">Your profile</h2>
+
+  <div class="card-ticket p-4">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger py-2 small">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="d-flex align-items-center gap-3 mb-4">
+        {% if user.avatar %}
+          <img src="{{ user.avatar.url }}" alt="{{ user.display_name }}" class="avatar-preview">
+        {% else %}
+          <div class="avatar-placeholder">{{ user.username|first|upper }}</div>
+        {% endif %}
+        <div class="flex-grow-1">
+          <label for="{{ form.avatar.id_for_label }}" class="form-label small mb-1">Profile photo</label>
+          <input type="file" name="{{ form.avatar.html_name }}" id="{{ form.avatar.id_for_label }}"
+                 class="form-control form-control-sm {% if form.avatar.errors %}is-invalid{% endif %}" accept="image/*">
+          {% for error in form.avatar.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.full_name.id_for_label }}" class="form-label">Full name</label>
+        <input type="text" name="{{ form.full_name.html_name }}" id="{{ form.full_name.id_for_label }}"
+               class="form-control {% if form.full_name.errors %}is-invalid{% endif %}"
+               value="{{ form.full_name.value|default_if_none:'' }}">
+        {% for error in form.full_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+        <input type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}"
+               class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+               value="{{ form.email.value|default_if_none:'' }}">
+        {% for error in form.email.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-4">
+        <label for="{{ form.upi_id.id_for_label }}" class="form-label">UPI ID</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-qr-code"></i></span>
+          <input type="text" name="{{ form.upi_id.html_name }}" id="{{ form.upi_id.id_for_label }}"
+                 class="form-control {% if form.upi_id.errors %}is-invalid{% endif %}"
+                 placeholder="yourname@okhdfcbank"
+                 value="{{ form.upi_id.value|default_if_none:'' }}">
+        </div>
+        {% for error in form.upi_id.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        <div class="form-text">Shown to group members so they know where to pay you back.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

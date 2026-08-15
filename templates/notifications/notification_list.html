@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Notifications — SplitEase{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 640px;">
+  <h2 class="mb-4">Notifications</h2>
+
+  {% if notifications %}
+  <div class="card-ticket p-3">
+    {% for notification in notifications %}
+    <div class="notification-row {% if not notification.is_read %}is-unread{% endif %}">
+      <span class="notification-dot {% if notification.is_read %}is-read{% endif %}"></span>
+      <div class="flex-grow-1">
+        <p class="mb-1 {% if not notification.is_read %}fw-medium{% endif %}">{{ notification.message }}</p>
+        <span class="small text-muted">{{ notification.created_at|date:"d M Y, g:i A" }}</span>
+      </div>
+      {% if not notification.is_read %}
+      <form method="post" action="{% url 'notifications:mark_read' pk=notification.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-primary">Mark read</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-bell fs-2 d-block mb-2"></i>
+    You're all caught up — no notifications yet.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

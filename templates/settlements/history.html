@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Settlement history — {{ group.name }} — SplitEase{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 720px;">
+
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="mb-1">Settlement history</h2>
+      <p class="text-muted mb-0">{{ group.name }}</p>
+    </div>
+    <a href="{% url 'settlements:balance_sheet' group_id=group.id %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Back to balances
+    </a>
+  </div>
+
+  {% if settlements %}
+  <div class="card-ticket p-3">
+    {% for settlement in settlements %}
+    <div class="transaction-row">
+      <div>
+        <div class="transaction-flow">
+          <span>{{ settlement.paid_by.display_name }}</span>
+          <i class="bi bi-arrow-right"></i>
+          <span>{{ settlement.paid_to.display_name }}</span>
+        </div>
+        <div class="small text-muted">
+          {% if settlement.settled_at %}{{ settlement.settled_at|date:"d M Y, g:i A" }}{% else %}{{ settlement.created_at|date:"d M Y" }}{% endif %}
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="expense-amount">₹{{ settlement.amount }}</span>
+        <span class="badge rounded-pill {% if settlement.status == 'completed' %}status-pill-completed{% else %}status-pill-pending{% endif %}">
+          {{ settlement.get_status_display }}
+        </span>
+        {% if settlement.status == 'pending' %}
+        <form method="post" action="{% url 'settlements:complete' pk=settlement.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-primary">Mark completed</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-receipt fs-2 d-block mb-2"></i>
+    No settlements recorded for this group yet.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

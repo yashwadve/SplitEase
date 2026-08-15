@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Create account — SplitEase{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="card-ticket auth-card">
+    <div class="text-center mb-4">
+      <span class="brand-mark d-inline-flex" style="width:40px;height:40px;font-size:1.1rem;">₹</span>
+      <h3 class="mt-3 mb-1">Create your account</h3>
+      <p class="text-muted small mb-0">Start splitting expenses with your groups</p>
+    </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger py-2 small">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="{{ form.username.html_name }}" id="{{ form.username.id_for_label }}"
+                 class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                 value="{{ form.username.value|default_if_none:'' }}" autofocus required>
+        </div>
+        {% for error in form.username.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        {% if form.username.help_text %}<div class="form-text">{{ form.username.help_text }}</div>{% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}"
+                 class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                 value="{{ form.email.value|default_if_none:'' }}" required>
+        </div>
+        {% for error in form.email.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.full_name.id_for_label }}" class="form-label">Full name <span class="text-muted small">(optional)</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+          <input type="text" name="{{ form.full_name.html_name }}" id="{{ form.full_name.id_for_label }}"
+                 class="form-control {% if form.full_name.errors %}is-invalid{% endif %}"
+                 value="{{ form.full_name.value|default_if_none:'' }}">
+        </div>
+        {% for error in form.full_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="{{ form.password1.html_name }}" id="{{ form.password1.id_for_label }}"
+                 class="form-control {% if form.password1.errors %}is-invalid{% endif %}" required>
+        </div>
+        {% for error in form.password1.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        {% if form.password1.help_text %}<div class="form-text">{{ form.password1.help_text }}</div>{% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+          <input type="password" name="{{ form.password2.html_name }}" id="{{ form.password2.id_for_label }}"
+                 class="form-control {% if form.password2.errors %}is-invalid{% endif %}" required>
+        </div>
+        {% for error in form.password2.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Create account</button>
+    </form>
+
+    <p class="auth-footer-link">
+      Already have an account? <a href="{% url 'accounts:login' %}">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

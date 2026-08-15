@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}
+  Dashboard — SplitEase
+{% endblock %}
+{% block content %}
+  <div class="container py-4">
+    <h2 class="mb-4">Welcome back, {{ user.first_name|default:user.username }}</h2>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card-ticket p-3 h-100">
+          <span class="text-muted small text-uppercase">You owe</span>
+          <div class="balance-figure balance-owe">₹{{ total_owed }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-ticket p-3 h-100">
+          <span class="text-muted small text-uppercase">You're owed</span>
+          <div class="balance-figure balance-owed">₹{{ total_to_receive }}</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card-ticket p-3 h-100">
+          <span class="text-muted small text-uppercase">Active groups</span>
+          <div class="balance-figure" style="color: var(--se-primary);">{{ groups|length }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">Your groups</h5>
+          <a href="{% url 'groups:group_create' %}" class="btn btn-sm btn-outline-primary">+ New group</a>
+        </div>
+
+        {% if groups %}
+          {% for group, balance in group_balances.items %}
+            <a href="{% url 'settlements:balance_sheet' group_id=group.pk %}" class="d-flex justify-content-between align-items-center py-2 border-bottom text-decoration-none text-reset" style="border-color: var(--se-line) !important;">
+              <span class="fw-medium">{{ group.name }}</span>
+              {% if balance > 0 %}
+                <span class="badge badge-owed rounded-pill px-3 py-2 text-mono">owed ₹{{ balance }}</span>
+              {% elif balance < 0 %}
+                <span class="badge badge-owe rounded-pill px-3 py-2 text-mono">owe ₹{{ balance|floatformat:2|slice:'1:' }}</span>
+              {% else %}
+                <span class="badge badge-settled rounded-pill px-3 py-2">settled</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-people fs-2 d-block mb-2"></i>
+            No groups yet — create one to start splitting expenses.
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col-lg-6">
+        <h5 class="mb-3">Recent expenses</h5>
+        {% if recent_expenses %}
+          <div class="card-ticket p-3">
+            {% for expense in recent_expenses %}
+              <div class="expense-row">
+                <div>
+                  <div class="fw-medium">{{ expense.group.name }}</div>
+                  <div class="small text-muted">paid by {{ expense.paid_by }} · {{ expense.created_at|date:'d M' }}</div>
+                </div>
+                <span class="expense-amount">₹{{ expense.amount }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-receipt fs-2 d-block mb-2"></i>
+            No expenses logged yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

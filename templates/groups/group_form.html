@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{% if is_create %}New group{% else %}Edit {{ group.name }}{% endif %} — SplitEase{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 560px;">
+  <h2 class="mb-4">{% if is_create %}Create a group{% else %}Edit group{% endif %}</h2>
+
+  <div class="card-ticket p-4">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger py-2 small">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if not is_create and group.image %}
+      <div class="mb-3">
+        <img src="{{ group.image.url }}" alt="{{ group.name }}" class="group-cover" style="height:110px;">
+      </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label for="{{ form.name.id_for_label }}" class="form-label">Group name</label>
+        <input type="text" name="{{ form.name.html_name }}" id="{{ form.name.id_for_label }}"
+               class="form-control {% if form.name.errors %}is-invalid{% endif %}"
+               value="{{ form.name.value|default_if_none:'' }}" placeholder="e.g. Goa Trip, Flatmates" autofocus required>
+        {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.description.id_for_label }}" class="form-label">Description <span class="text-muted small">(optional)</span></label>
+        <textarea name="{{ form.description.html_name }}" id="{{ form.description.id_for_label }}" rows="3"
+                  class="form-control {% if form.description.errors %}is-invalid{% endif %}"
+                  placeholder="What's this group for?">{{ form.description.value|default_if_none:'' }}</textarea>
+        {% for error in form.description.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="mb-4">
+        <label for="{{ form.image.id_for_label }}" class="form-label">Cover image <span class="text-muted small">(optional)</span></label>
+        <input type="file" name="{{ form.image.html_name }}" id="{{ form.image.id_for_label }}"
+               class="form-control {% if form.image.errors %}is-invalid{% endif %}" accept="image/*">
+        {% for error in form.image.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {% if is_create %}Create group{% else %}Save changes{% endif %}
+        </button>
+        {% if is_create %}
+          <a href="{% url 'groups:group_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        {% else %}
+          <a href="{% url 'groups:group_detail' pk=group.pk %}" class="btn btn-outline-secondary">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

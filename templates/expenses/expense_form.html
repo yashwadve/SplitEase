@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}{% if is_create %}Add expense{% else %}Edit expense{% endif %} — {{ group.name }} — SplitEase{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 700px;">
+  <h2 class="mb-1">{% if is_create %}Add expense{% else %}Edit expense{% endif %}</h2>
+  <p class="text-muted mb-4">in <strong>{{ group.name }}</strong></p>
+
+  <div class="card-ticket p-4">
+    <form method="post" enctype="multipart/form-data" class="se-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+      <div class="alert alert-danger py-2 small">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-8">
+          <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+          <input type="text" name="{{ form.title.html_name }}" id="{{ form.title.id_for_label }}"
+                 class="form-control {% if form.title.errors %}is-invalid{% endif %}"
+                 value="{{ form.title.value|default_if_none:'' }}" placeholder="e.g. Dinner at Cafe X" autofocus required>
+          {% for error in form.title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label for="{{ form.amount.id_for_label }}" class="form-label">Amount</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" step="0.01" min="0.01" name="{{ form.amount.html_name }}" id="id_amount"
+                   class="form-control {% if form.amount.errors %}is-invalid{% endif %}"
+                   value="{{ form.amount.value|default_if_none:'' }}" required>
+          </div>
+          {% for error in form.amount.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+          {{ form.category }}
+          {% for error in form.category.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.paid_by.id_for_label }}" class="form-label">Paid by</label>
+          {{ form.paid_by }}
+          {% for error in form.paid_by.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="{{ form.split_type.id_for_label }}" class="form-label">Split type</label>
+          {{ form.split_type }}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+          <input type="date" name="{{ form.date.html_name }}" id="{{ form.date.id_for_label }}"
+                 class="form-control {% if form.date.errors %}is-invalid{% endif %}"
+                 value="{{ form.date.value|date:'Y-m-d'|default_if_none:'' }}" required>
+          {% for error in form.date.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Split between</label>
+        <div class="card-ticket p-3">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0" id="participants-table">
+              <thead>
+                <tr>
+                  <th style="width:40px;"></th>
+                  <th>Member</th>
+                  <th class="text-end" id="split-col-header" style="width:150px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for member in members %}
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input participant-check"
+                           name="participants" value="{{ member.id }}"
+                           {% if member.id in selected_participants %}checked{% endif %}>
+                  </td>
+                  <td>{{ member.display_name }}</td>
+                  <td class="text-end">
+                    <input type="text" inputmode="decimal" class="form-control form-control-sm split-input text-end text-mono"
+                           name="split_{{ member.id }}" data-user-id="{{ member.id }}" placeholder="0.00">
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="d-flex justify-content-between small mt-2" id="split-summary" style="display:none;">
+            <span class="text-muted" id="split-target-label"></span>
+            <span class="text-mono">Total: <span id="split-total-display">0.00</span></span>
+          </div>
+        </div>
+        <div class="form-text">Uncheck anyone who wasn't part of this expense.</div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="{{ form.notes.id_for_label }}" class="form-label">Notes <span class="text-muted small">(optional)</span></label>
+          {{ form.notes }}
+        </div>
+        <div class="col-md-6">
+          <label for="{{ form.receipt_image.id_for_label }}" class="form-label">Receipt <span class="text-muted small">(optional)</span></label>
+          <input type="file" name="{{ form.receipt_image.html_name }}" id="{{ form.receipt_image.id_for_label }}"
+                 class="form-control" accept="image/*">
+          {% if not is_create and expense.receipt_image %}
+            <div class="form-text"><a href="{{ expense.receipt_image.url }}" target="_blank">View current receipt</a></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          {% if is_create %}Add expense{% else %}Save changes{% endif %}
+        </button>
+        {% if is_create %}
+          <a href="{% url 'groups:group_detail' pk=group.pk %}" class="btn btn-outline-secondary">Cancel</a>
+        {% else %}
+          <a href="{% url 'expenses:expense_detail' pk=expense.pk %}" class="btn btn-outline-secondary">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if not is_create %}
+<script id="existing-splits-data" type="application/json">{{ existing_splits_json|default:"{}"|safe }}</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const splitTypeSelect = document.getElementById('id_split_type');
+  const amountInput = document.getElementById('id_amount');
+  const rows = document.querySelectorAll('#participants-table tbody tr');
+  const summary = document.getElementById('split-summary');
+  const targetLabel = document.getElementById('split-target-label');
+  const totalDisplay = document.getElementById('split-total-display');
+  const colHeader = document.getElementById('split-col-header');
+  const existingSplitsEl = document.getElementById('existing-splits-data');
+  const existingSplits = existingSplitsEl ? JSON.parse(existingSplitsEl.textContent || '{}') : {};
+
+  rows.forEach(function (row) {
+    const checkbox = row.querySelector('.participant-check');
+    const input = row.querySelector('.split-input');
+    if (existingSplits[checkbox.value] !== undefined) {
+      input.value = existingSplits[checkbox.value];
+    }
+  });
+
+  function updateVisibility() {
+    const type = splitTypeSelect.value;
+    const showInputs = type !== 'equal';
+
+    colHeader.textContent = type === 'percentage' ? 'Percent'
+      : type === 'share' ? 'Shares'
+      : type === 'custom' ? 'Amount (₹)' : '';
+
+    rows.forEach(function (row) {
+      const checkbox = row.querySelector('.participant-check');
+      const input = row.querySelector('.split-input');
+      input.style.visibility = showInputs ? 'visible' : 'hidden';
+      input.disabled = !showInputs || !checkbox.checked;
+      row.style.opacity = checkbox.checked ? '1' : '0.45';
+    });
+
+    summary.style.display = showInputs ? 'flex' : 'none';
+    if (type === 'custom') targetLabel.textContent = 'Total must equal ₹' + (amountInput.value || '0');
+    if (type === 'percentage') targetLabel.textContent = 'Percentages must total 100%';
+    if (type === 'share') targetLabel.textContent = 'Enter relative shares (e.g. 1, 2, 1)';
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let total = 0;
+    rows.forEach(function (row) {
+      const input = row.querySelector('.split-input');
+      if (!input.disabled) total += parseFloat(input.value || '0') || 0;
+    });
+    totalDisplay.textContent = total.toFixed(2);
+  }
+
+  splitTypeSelect.addEventListener('change', updateVisibility);
+  amountInput.addEventListener('input', updateVisibility);
+  rows.forEach(function (row) {
+    row.querySelector('.participant-check').addEventListener('change', updateVisibility);
+    row.querySelector('.split-input').addEventListener('input', updateTotal);
+  });
+
+  updateVisibility();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}
+  {{ group.name }} — SplitEase
+{% endblock %}
+{% block content %}
+  <div class="container py-4">
+    <div class="card-ticket mb-4 overflow-hidden">
+      <div class="row g-0">
+        <div class="col-md-3">
+          {% if group.image %}
+            <img src="{{ group.image.url }}" alt="{{ group.name }}" class="w-100 h-100" style="object-fit:cover; min-height:150px;" />
+          {% else %}
+            <div class="group-cover-placeholder h-100" style="border-radius:0; min-height:150px;">{{ group.name|first|upper }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-9 p-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+              <h3 class="mb-1">{{ group.name }}</h3>
+              <p class="text-muted mb-2">{{ group.description|default:'No description yet.' }}</p>
+              <span class="text-mono small text-muted">
+                <i class="bi bi-people me-1"></i>{{ memberships|length }} member{{ memberships|length|pluralize }}
+                &middot; created {{ group.created_at|date:'d M Y' }}
+              </span>
+            </div>
+            {% if is_admin %}
+              <div class="d-flex gap-2">
+                <a href="{% url 'groups:group_edit' pk=group.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'groups:group_delete' pk=group.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+              </div>
+            {% endif %}
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <a href="{% url 'expenses:expense_create' group_id=group.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add expense</a>
+            <a href="{% url 'settlements:balance_sheet' group_id=group.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-wallet2 me-1"></i>Balances & settle up</a>
+            {% if is_admin %}
+              <a href="{% url 'groups:add_member' pk=group.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-person-plus me-1"></i>Add member</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-5">
+        <h5 class="mb-3">Members</h5>
+        <div class="card-ticket p-3">
+          {% for membership in memberships %}
+            <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color: var(--se-line) !important;">
+              <div class="d-flex align-items-center gap-2">
+                {% if membership.user.avatar %}
+                  <img src="{{ membership.user.avatar.url }}" alt="" class="member-avatar-sm" />
+                {% else %}
+                  <div class="member-avatar-sm-placeholder">{{ membership.user.username|first|upper }}</div>
+                {% endif %}
+                <div>
+                  <div class="fw-medium">{{ membership.user.display_name }}</div>
+                  <span class="badge {% if membership.is_admin %}
+                      role-badge-admin
+                    {% else %}
+                      role-badge-member
+                    {% endif %} rounded-pill">
+                    {{ membership.get_role_display }}
+                  </span>
+                </div>
+              </div>
+              {% if is_admin and membership.user_id != group.created_by_id %}
+                <form method="post" action="{% url 'groups:remove_member' pk=group.pk user_id=membership.user_id %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove member"><i class="bi bi-person-dash"></i></button>
+                </form>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <h5 class="mb-3">Recent expenses</h5>
+        {% if expenses %}
+          <div class="card-ticket p-3">
+            {% for expense in expenses %}
+              <div class="expense-row">
+                <div>
+                  <div class="fw-medium">{{ expense.category|default:'Expense' }}</div>
+                  <div class="small text-muted">paid by {{ expense.paid_by.display_name }} · {{ expense.created_at|date:'d M' }}</div>
+                </div>
+                <span class="expense-amount">₹{{ expense.amount }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-receipt fs-2 d-block mb-2"></i>
+            No expenses logged in this group yet.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
